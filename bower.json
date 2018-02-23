@@ -1,8 +1,13 @@
 {
-	"name"           : "neat",
-	"version"        : "1.0.0",
-	"homepage"       : "http://AhmadAwais.com",
-	"authors"        : ["Ahmad Awais"],
-	"dependencies"   : {},
-	"devDependencies": {}
+  "name": "base-theme-wp",
+  "homepage": "https://github.com/Amarelo-Manga/base-theme-wp",
+  "authors": [
+    "Elvis B. Martins <elvis@amarelomanga.com.br>"
+  ],
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "bootstrap": "git://github.com/twbs/bootstrap.git#v4.0.0-beta",
+    "popper.js": "^1.12.3"
+  }
 }

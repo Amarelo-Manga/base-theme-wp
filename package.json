@@ -1,49 +1,58 @@
 {
   "name": "base-theme-wp",
   "version": "1.0.0",
+  "author": "Elvis B. Martins <elvis@amarelomanga.com.br>",
+  "homepage": "https://github.com/Amarelo-Manga/base-theme-wp",
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/Amarelo-Manga/base-theme-wp"
+    "url": "git://github.com/Amarelo-Manga/base-theme-wp.git"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://opensource.org/licenses/MIT"
+    }
+  ],
+  "scripts": {
+    "build": "bower install && gulp",
+    "jshint": "gulp jshint",
+    "jscs": "jscs gulpfile.js assets/scripts/*.js"
   },
   "engines": {
     "node": ">= 4.5"
   },
-  "dependencies": {
-    "gifsicle": "^3.0.4",
-    "imagemin-gifsicle": "^5.2.0",
-    "optipng-bin": "^4.0.0",
-    "pngquant-bin": "^3.1.1"
-  },
   "devDependencies": {
-    "browser-sync": "^2.4.0",
-    "gulp": "^3.8.11",
-    "gulp-autoprefixer": "^2.1.0",
-    "gulp-cache": "^0.2.8",
-    "gulp-combine-media-queries": "^0.1.0",
-    "gulp-concat": "^2.5.2",
-    "gulp-filter": "^2.0.2",
-    "gulp-ignore": "^1.2.1",
-    "gulp-imagemin": "^0.6.2",
-    "gulp-jshint": "^1.9.4",
-    "gulp-livereload": "^2.1.1",
-    "gulp-load-plugins": "^0.6.0",
-    "gulp-newer": "^0.3.0",
-    "gulp-notify": "^2.2.0",
-    "gulp-phpcs": "^0.4.0",
-    "gulp-pixrem": "0.1.1",
-    "gulp-plumber": "^0.6.6",
-    "gulp-rename": "^1.2.0",
-    "gulp-rimraf": "^0.1.0",
-    "gulp-run-sequence": "^0.3.2",
-    "gulp-sass": "^2.0.0",
+    "asset-builder": "^1.1.0",
+    "browser-sync": "^2.8.2",
+    "del": "^2.2.2",
+    "gulp": "^3.9.1",
+    "gulp-autoprefixer": "^3.1.1",
+    "gulp-changed": "^1.3.0",
+    "gulp-concat": "^2.6.0",
+    "gulp-cssnano": "^2.1.0",
+    "gulp-flatten": "0.3.1",
+    "gulp-if": "^2.0.1",
+    "gulp-imagemin": "^3.0.3",
+    "gulp-jshint": "^2.0.1",
+    "gulp-less": "^3.0.3",
+    "gulp-plumber": "^1.0.1",
+    "gulp-rename": "^1.2.2",
+    "gulp-rev": "^7.1.2",
+    "gulp-sass": "^2.0.1",
     "gulp-sourcemaps": "^1.5.2",
-    "gulp-uglify": "^1.1.0",
-    "gulp-uglifycss": "^1.0.4",
-    "gulp-uncss": "1.0.0",
-    "gulp-util": "^3.0.4",
-    "gulp-wp-rev": "0.0.1",
-    "gulp-zip": "^2.0.3",
-    "tiny-lr": "0.0.7"
+    "gulp-uglify": "^2.0.0",
+    "imagemin-pngcrush": "^5.0.0",
+    "jshint": "^2.9.3",
+    "jshint-stylish": "^2.0.1",
+    "lazypipe": "^1.0.1",
+    "merge-stream": "^1.0.0",
+    "minimist": "^1.1.3",
+    "run-sequence": "^1.1.2",
+    "traverse": "^0.6.6",
+    "wiredep": "^4.0.0"
+  },
+  "dependencies": {
+    "bower": "^1.8.2"
   }
 }

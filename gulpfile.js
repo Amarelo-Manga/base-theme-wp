@@ -1,280 +1,299 @@
-/**
- *
- * Gulpfile setup
- *
- * @since 1.0.0
- * @authors Ahmad Awais, @digisavvy, @desaiuditd, @jb510, @dmassiani and @Maxlopez
- * @package neat
- */
+// ## Globals
+var argv         = require('minimist')(process.argv.slice(2));
+var autoprefixer = require('gulp-autoprefixer');
+var browserSync  = require('browser-sync').create();
+var changed      = require('gulp-changed');
+var concat       = require('gulp-concat');
+var flatten      = require('gulp-flatten');
+var gulp         = require('gulp');
+var gulpif       = require('gulp-if');
+var imagemin     = require('gulp-imagemin');
+var jshint       = require('gulp-jshint');
+var lazypipe     = require('lazypipe');
+var less         = require('gulp-less');
+var merge        = require('merge-stream');
+var cssNano      = require('gulp-cssnano');
+var plumber      = require('gulp-plumber');
+var rev          = require('gulp-rev');
+var runSequence  = require('run-sequence');
+var sass         = require('gulp-sass');
+var sourcemaps   = require('gulp-sourcemaps');
+var uglify       = require('gulp-uglify');
 
+// See https://github.com/austinpray/asset-builder
+var manifest = require('asset-builder')('./assets/manifest.json');
 
-// Project configuration
-var project 		= 'neat', // Project name, used for build zip.
-	url 		= 'http://localhost/amarelomanganovosite/', // Local Development URL for BrowserSync. Change as-needed.
-	bower 		= './assets/bower_components/'; // Not truly using this yet, more or less playing right now. TO-DO Place in Dev branch
-	build 		= './buildtheme/', // Files that you want to package into a zip go here
-	buildInclude 	= [
-				// include common file types
-				'**/*.php',
-				'**/*.html',
-				'**/*.css',
-				'**/*.js',
-				'**/*.svg',
-				'**/*.ttf',
-				'**/*.otf',
-				'**/*.eot',
-				'**/*.woff',
-				'**/*.woff2',
+// `path` - Paths to base asset directories. With trailing slashes.
+// - `path.source` - Path to the source files. Default: `assets/`
+// - `path.dist` - Path to the build directory. Default: `dist/`
+var path = manifest.paths;
 
-				// include specific files and folders
-				'screenshot.png',
+// `config` - Store arbitrary configuration values here.
+var config = manifest.config || {};
 
-				// exclude files and folders
-				'!node_modules/**/*',
-				'!assets/bower_components/**/*',
-				'!style.css.map',
-				'!assets/js/custom/*',
-				'!assets/css/partials/*'
+// `globs` - These ultimately end up in their respective `gulp.src`.
+// - `globs.js` - Array of asset-builder JS dependency objects. Example:
+//   ```
+//   {type: 'js', name: 'main.js', globs: []}
+//   ```
+// - `globs.css` - Array of asset-builder CSS dependency objects. Example:
+//   ```
+//   {type: 'css', name: 'main.css', globs: []}
+//   ```
+// - `globs.fonts` - Array of font path globs.
+// - `globs.images` - Array of image path globs.
+// - `globs.bower` - Array of all the main Bower files.
+var globs = manifest.globs;
 
-			];
+// `project` - paths to first-party assets.
+// - `project.js` - Array of first-party JS assets.
+// - `project.css` - Array of first-party CSS assets.
+var project = manifest.getProjectGlobs();
 
-// Load plugins
-	var gulp     = require('gulp'),
-		browserSync  = require('browser-sync'), // Asynchronous browser loading on .scss file changes
-		reload       = browserSync.reload,
-		autoprefixer = require('gulp-autoprefixer'), // Autoprefixing magic
-		minifycss    = require('gulp-uglifycss'),
-		filter       = require('gulp-filter'),
-		uglify       = require('gulp-uglify'),
-		imagemin     = require('gulp-imagemin'),
-		newer        = require('gulp-newer'),
-		rename       = require('gulp-rename'),
-		concat       = require('gulp-concat'),
-		notify       = require('gulp-notify'),
-		cmq          = require('gulp-combine-media-queries'),
-		runSequence  = require('gulp-run-sequence'),
-		sass         = require('gulp-sass'),
-		plugins      = require('gulp-load-plugins')({ camelize: true }),
-		ignore       = require('gulp-ignore'), // Helps with ignoring files and directories in our run tasks
-		rimraf       = require('gulp-rimraf'), // Helps with removing files and directories in our run tasks
-		zip          = require('gulp-zip'), // Using to zip up our packaged theme into a tasty zip file that can be installed in WordPress!
-		plumber      = require('gulp-plumber'), // Helps prevent stream crashing on errors
-		cache        = require('gulp-cache'),
-		sourcemaps   = require('gulp-sourcemaps');
+// CLI options
+var enabled = {
+  // Enable static asset revisioning when `--production`
+  rev: argv.production,
+  // Disable source maps when `--production`
+  maps: !argv.production,
+  // Fail styles task on error when `--production`
+  failStyleTask: argv.production,
+  // Fail due to JSHint warnings only when `--production`
+  failJSHint: argv.production,
+  // Strip debug statments from javascript when `--production`
+  stripJSDebug: argv.production
+};
 
+// Path to the compiled assets manifest in the dist directory
+var revManifest = path.dist + 'assets.json';
 
-/**
- * Browser Sync
- *
- * Asynchronous browser syncing of assets across multiple devices!! Watches for changes to js, image and php files
- * Although, I think this is redundant, since we have a watch task that does this already.
-*/
-gulp.task('browser-sync', function() {
-	var files = [
-					'**/*.php',
-					'**/*.{png,jpg,gif}'
-				];
-	browserSync.init(files, {
+// Error checking; produce an error rather than crashing.
+var onError = function(err) {
+  console.log(err.toString());
+  this.emit('end');
+};
 
-		// Read here http://www.browsersync.io/docs/options/
-		proxy: url,
+// ## Reusable Pipelines
+// See https://github.com/OverZealous/lazypipe
 
-		// port: 8080,
+// ### CSS processing pipeline
+// Example
+// ```
+// gulp.src(cssFiles)
+//   .pipe(cssTasks('main.css')
+//   .pipe(gulp.dest(path.dist + 'styles'))
+// ```
+var cssTasks = function(filename) {
+  return lazypipe()
+    .pipe(function() {
+      return gulpif(!enabled.failStyleTask, plumber());
+    })
+    .pipe(function() {
+      return gulpif(enabled.maps, sourcemaps.init());
+    })
+    .pipe(function() {
+      return gulpif('*.less', less());
+    })
+    .pipe(function() {
+      return gulpif('*.scss', sass({
+        outputStyle: 'nested', // libsass doesn't support expanded yet
+        precision: 10,
+        includePaths: ['.'],
+        errLogToConsole: !enabled.failStyleTask
+      }));
+    })
+    .pipe(concat, filename)
+    .pipe(autoprefixer, {
+      browsers: [
+        'last 2 versions',
+        'android 4',
+        'opera 12'
+      ]
+    })
+    .pipe(cssNano, {
+      safe: true
+    })
+    .pipe(function() {
+      return gulpif(enabled.rev, rev());
+    })
+    .pipe(function() {
+      return gulpif(enabled.maps, sourcemaps.write('.', {
+        sourceRoot: 'assets/styles/'
+      }));
+    })();
+};
 
-		// Tunnel the Browsersync server through a random Public URL
-		// tunnel: true,
+// ### JS processing pipeline
+// Example
+// ```
+// gulp.src(jsFiles)
+//   .pipe(jsTasks('main.js')
+//   .pipe(gulp.dest(path.dist + 'scripts'))
+// ```
+var jsTasks = function(filename) {
+  return lazypipe()
+    .pipe(function() {
+      return gulpif(enabled.maps, sourcemaps.init());
+    })
+    .pipe(concat, filename)
+    .pipe(uglify, {
+      compress: {
+        'drop_debugger': enabled.stripJSDebug
+      }
+    })
+    .pipe(function() {
+      return gulpif(enabled.rev, rev());
+    })
+    .pipe(function() {
+      return gulpif(enabled.maps, sourcemaps.write('.', {
+        sourceRoot: 'assets/scripts/'
+      }));
+    })();
+};
 
-		// Attempt to use the URL "http://my-private-site.localtunnel.me"
-		// tunnel: "ppress",
+// ### Write to rev manifest
+// If there are any revved files then write them to the rev manifest.
+// See https://github.com/sindresorhus/gulp-rev
+var writeToManifest = function(directory) {
+  return lazypipe()
+    .pipe(gulp.dest, path.dist + directory)
+    .pipe(browserSync.stream, {match: '**/*.{js,css}'})
+    .pipe(rev.manifest, revManifest, {
+      base: path.dist,
+      merge: true
+    })
+    .pipe(gulp.dest, path.dist)();
+};
 
-		// Inject CSS changes
-		injectChanges: true
+// ## Gulp tasks
+// Run `gulp -T` for a task summary
 
-	});
-});
-
-
-
-/**
- * Styles
- *
- * Looking at src/sass and compiling the files into Expanded format, Autoprefixing and sending the files to the build folder
- *
- * Sass output styles: https://web-design-weekly.com/2014/06/15/different-sass-output-styles/
-*/
-gulp.task('styles', function () {
-	 	gulp.src('./assets/css/*.scss')
-				.pipe(plumber())
-				.pipe(sourcemaps.init())
-				.pipe(sass({
-					errLogToConsole: true,
-
-					//outputStyle: 'compressed',
-					outputStyle: 'compact',
-					// outputStyle: 'nested',
-					// outputStyle: 'expanded',
-					precision: 10
-				}))
-				.pipe(sourcemaps.write({includeContent: false}))
-				.pipe(sourcemaps.init({loadMaps: true}))
-				.pipe(autoprefixer('last 2 version', '> 1%', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1', 'ios 6', 'android 4'))
-				.pipe(sourcemaps.write('.'))
-				.pipe(plumber.stop())
-				.pipe(gulp.dest('./'))
-				.pipe(filter('**/*.css')) // Filtering stream to only css files
-				.pipe(cmq()) // Combines Media Queries
-				.pipe(reload({stream:true})) // Inject Styles when style file is created
-				.pipe(rename({ suffix: '.min' }))
-				.pipe(minifycss({
-					maxLineLen: 80
-				}))
-				.pipe(gulp.dest('./'))
-				.pipe(reload({stream:true})) // Inject Styles when min style file is created
-				.pipe(notify({ message: 'Styles task complete', onLast: true }))
-});
-
-
-/**
- * Scripts: Vendors
- *
- * Look at src/js and concatenate those files, send them to assets/js where we then minimize the concatenated file.
-*/
-gulp.task('vendorsJs', function() {
-	return 	gulp.src(['./assets/js/vendor/*.js', bower+'**/*.js'])
-				.pipe(concat('vendors.js'))
-				.pipe(gulp.dest('./assets/js'))
-				.pipe(rename( {
-					basename: "vendors",
-					suffix: '.min'
-				}))
-				.pipe(uglify())
-				.pipe(gulp.dest('./assets/js/'))
-				.pipe(notify({ message: 'Vendor scripts task complete', onLast: true }));
-});
-
-
-/**
- * Scripts: Custom
- *
- * Look at src/js and concatenate those files, send them to assets/js where we then minimize the concatenated file.
-*/
-
-gulp.task('scriptsJs', function() {
-	return 	gulp.src('./assets/js/custom/*.js')
-				.pipe(concat('custom.js'))
-				.pipe(gulp.dest('./assets/js'))
-				.pipe(rename( {
-					basename: "custom",
-					suffix: '.min'
-				}))
-				.pipe(uglify())
-				.pipe(gulp.dest('./assets/js/'))
-				.pipe(notify({ message: 'Custom scripts task complete', onLast: true }));
-});
-
-
-/**
- * Images
- *
- * Look at src/images, optimize the images and send them to the appropriate place
-*/
-gulp.task('images', function() {
-
-// Add the newer pipe to pass through newer images only
-	return 	gulp.src(['./assets/img/raw/**/*.{png,jpg,gif}'])
-				.pipe(newer('./assets/img/'))
-				.pipe(rimraf({ force: true }))
-				.pipe(imagemin({ optimizationLevel: 7, progressive: true, interlaced: true }))
-				.pipe(gulp.dest('./assets/img/'))
-				.pipe( notify( { message: 'Images task complete', onLast: true } ) );
-});
-
-
-/**
- * Clean gulp cache
- */
- gulp.task('clear', function () {
-   cache.clearAll();
- });
-
-
- /**
-  * Clean tasks for zip
-  *
-  * Being a little overzealous, but we're cleaning out the build folder, codekit-cache directory and annoying DS_Store files and Also
-  * clearing out unoptimized image files in zip as those will have been moved and optimized
- */
-
- gulp.task('cleanup', function() {
- 	return 	gulp.src(['./assets/bower_components', '**/.sass-cache','**/.DS_Store'], { read: false }) // much faster
-		 		.pipe(ignore('node_modules/**')) //Example of a directory to ignore
-		 		.pipe(rimraf({ force: true }))
-		 		// .pipe(notify({ message: 'Clean task complete', onLast: true }));
- });
- gulp.task('cleanupFinal', function() {
- 	return 	gulp.src(['./assets/bower_components','**/.sass-cache','**/.DS_Store'], { read: false }) // much faster
-		 		.pipe(ignore('node_modules/**')) //Example of a directory to ignore
-		 		.pipe(rimraf({ force: true }))
-		 		// .pipe(notify({ message: 'Clean task complete', onLast: true }));
- });
-
- /**
-  * Build task that moves essential theme files for production-ready sites
-  *
-  * buildFiles copies all the files in buildInclude to build folder - check variable values at the top
-  * buildImages copies all the images from img folder in assets while ignoring images inside raw folder if any
-  */
-
-  gulp.task('buildFiles', function() {
-  	return 	gulp.src(buildInclude)
- 		 		.pipe(gulp.dest(build))
- 		 		.pipe(notify({ message: 'Copy from buildFiles complete', onLast: true }));
+// ### Styles
+// `gulp styles` - Compiles, combines, and optimizes Bower CSS and project CSS.
+// By default this task will only log a warning if a precompiler error is
+// raised. If the `--production` flag is set: this task will fail outright.
+gulp.task('styles', ['wiredep'], function() {
+  var merged = merge();
+  manifest.forEachDependency('css', function(dep) {
+    var cssTasksInstance = cssTasks(dep.name);
+    if (!enabled.failStyleTask) {
+      cssTasksInstance.on('error', function(err) {
+        console.error(err.message);
+        this.emit('end');
+      });
+    }
+    merged.add(gulp.src(dep.globs, {base: 'styles'})
+      .pipe(plumber({errorHandler: onError}))
+      .pipe(cssTasksInstance));
   });
-
-
-/**
-* Images
-*
-* Look at src/images, optimize the images and send them to the appropriate place
-*/
-gulp.task('buildImages', function() {
-	return 	gulp.src(['assets/img/**/*', '!assets/images/raw/**'])
-		 		.pipe(gulp.dest(build+'assets/img/'))
-		 		.pipe(plugins.notify({ message: 'Images copied to buildTheme folder', onLast: true }));
+  return merged
+    .pipe(writeToManifest('styles'));
 });
 
- /**
-  * Zipping build directory for distribution
-  *
-  * Taking the build folder, which has been cleaned, containing optimized files and zipping it up to send out as an installable theme
- */
- gulp.task('buildZip', function () {
- 	// return 	gulp.src([build+'/**/', './.jshintrc','./.bowerrc','./.gitignore' ])
- 	return 	gulp.src(build+'/**/')
-		 		.pipe(zip(project+'.zip'))
-		 		.pipe(gulp.dest('./'))
-		 		.pipe(notify({ message: 'Zip task complete', onLast: true }));
- });
+// ### Scripts
+// `gulp scripts` - Runs JSHint then compiles, combines, and optimizes Bower JS
+// and project JS.
+gulp.task('scripts', ['jshint'], function() {
+  var merged = merge();
+  manifest.forEachDependency('js', function(dep) {
+    merged.add(
+      gulp.src(dep.globs, {base: 'scripts'})
+        .pipe(plumber({errorHandler: onError}))
+        .pipe(jsTasks(dep.name))
+    );
+  });
+  return merged
+    .pipe(writeToManifest('scripts'));
+});
 
+// ### Fonts
+// `gulp fonts` - Grabs all the fonts and outputs them in a flattened directory
+// structure. See: https://github.com/armed/gulp-flatten
+gulp.task('fonts', function() {
+  return gulp.src(globs.fonts)
+    .pipe(flatten())
+    .pipe(gulp.dest(path.dist + 'fonts'))
+    .pipe(browserSync.stream());
+});
 
- // ==== TASKS ==== //
- /**
-  * Gulp Default Task
-  *
-  * Compiles styles, fires-up browser sync, watches js and php files. Note browser sync task watches php files
-  *
- */
+// ### Images
+// `gulp images` - Run lossless compression on all the images.
+gulp.task('images', function() {
+  return gulp.src(globs.images)
+    .pipe(imagemin([
+      imagemin.jpegtran({progressive: true}),
+      imagemin.gifsicle({interlaced: true}),
+      imagemin.svgo({plugins: [
+        {removeUnknownsAndDefaults: false},
+        {cleanupIDs: false}
+      ]})
+    ]))
+    .pipe(gulp.dest(path.dist + 'images'))
+    .pipe(browserSync.stream());
+});
 
- // Package Distributable Theme
- gulp.task('build', function(cb) {
- 	runSequence('styles', 'cleanup', 'vendorsJs', 'scriptsJs',  'buildFiles', 'buildImages', 'buildZip','cleanupFinal', cb);
- });
+// ### JSHint
+// `gulp jshint` - Lints configuration JSON and project JS.
+gulp.task('jshint', function() {
+  return gulp.src([
+    'bower.json', 'gulpfile.js'
+  ].concat(project.js))
+    .pipe(jshint())
+    .pipe(jshint.reporter('jshint-stylish'))
+    .pipe(gulpif(enabled.failJSHint, jshint.reporter('fail')));
+});
 
+// ### Clean
+// `gulp clean` - Deletes the build folder entirely.
+gulp.task('clean', require('del').bind(null, [path.dist]));
 
- // Watch Task
- gulp.task('default', ['styles', 'vendorsJs', 'scriptsJs', 'images', 'browser-sync'], function () {
- 	gulp.watch('./assets/img/raw/**/*', ['images']);
- 	gulp.watch('./assets/css/**/*.scss', ['styles']);
- 	gulp.watch('./assets/js/**/*.js', ['scriptsJs', browserSync.reload]);
+// ### Watch
+// `gulp watch` - Use BrowserSync to proxy your dev server and synchronize code
+// changes across devices. Specify the hostname of your dev server at
+// `manifest.config.devUrl`. When a modification is made to an asset, run the
+// build step for that asset and inject the changes into the page.
+// See: http://www.browsersync.io
+gulp.task('watch', function() {
+  browserSync.init({
+    files: ['{lib,templates}/**/*.php', '*.php'],
+    proxy: config.devUrl,
+    snippetOptions: {
+      whitelist: ['/wp-admin/admin-ajax.php'],
+      blacklist: ['/wp-admin/**']
+    }
+  });
+  gulp.watch([path.source + 'styles/**/*'], ['styles']);
+  gulp.watch([path.source + 'scripts/**/*'], ['jshint', 'scripts']);
+  gulp.watch([path.source + 'fonts/**/*'], ['fonts']);
+  gulp.watch([path.source + 'images/**/*'], ['images']);
+  gulp.watch(['bower.json', 'assets/manifest.json'], ['build']);
+});
 
- });
+// ### Build
+// `gulp build` - Run all the build tasks but don't clean up beforehand.
+// Generally you should be running `gulp` instead of `gulp build`.
+gulp.task('build', function(callback) {
+  runSequence('styles',
+              'scripts',
+              ['fonts', 'images'],
+              callback);
+});
+
+// ### Wiredep
+// `gulp wiredep` - Automatically inject Less and Sass Bower dependencies. See
+// https://github.com/taptapship/wiredep
+gulp.task('wiredep', function() {
+  var wiredep = require('wiredep').stream;
+  return gulp.src(project.css)
+    .pipe(wiredep())
+    .pipe(changed(path.source + 'styles', {
+      hasChanged: changed.compareSha1Digest
+    }))
+    .pipe(gulp.dest(path.source + 'styles'));
+});
+
+// ### Gulp
+// `gulp` - Run a complete build. To compile for production run `gulp --production`.
+gulp.task('default', ['clean'], function() {
+  gulp.start('build');
+});
