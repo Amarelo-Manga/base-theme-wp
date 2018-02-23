@@ -1,9 +1,13 @@
 {
-  "name": "neat",
+  "name": "base-theme-wp",
   "version": "1.0.0",
+  "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/ahmadawais/neat"
+    "url": "https://github.com/Amarelo-Manga/base-theme-wp"
+  },
+  "engines": {
+    "node": ">= 4.5"
   },
   "dependencies": {
     "gifsicle": "^3.0.4",
