@@ -23,7 +23,7 @@ get_header(); ?>
 
 		<?php while ( have_posts() ) : the_post(); ?>
 
-					<?php get_template_part( 'assets/views/content', get_post_format() ); ?>
+					<?php get_template_part( 'templates/content', get_post_format() ); ?>
 
 				<?php endwhile; ?>
 
@@ -31,7 +31,7 @@ get_header(); ?>
 
 		<?php else : ?>
 
-			<?php get_template_part( 'assets/views/content', 'none' ); ?>
+			<?php get_template_part( 'templates/content', 'none' ); ?>
 
 		<?php endif; ?>
 
