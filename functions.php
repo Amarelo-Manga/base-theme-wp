@@ -31,7 +31,7 @@ if ( ! function_exists( 'neat_setup' ) ) :
  * runs before the init hook. The init hook is too late for some features, such
  * as indicating support for post thumbnails.
  */
-function neat_setup() {
+function base_setup() {
 
 
 	// Add default posts and comments RSS feed links to head.
@@ -71,8 +71,8 @@ function neat_setup() {
 		'default-image' => '',
 	) ) );
 }
-endif; // neat_setup
-add_action( 'after_setup_theme', 'neat_setup' );
+endif; // base_setup
+add_action( 'after_setup_theme', 'base_setup' );
 
 
 
@@ -81,8 +81,8 @@ add_action( 'after_setup_theme', 'neat_setup' );
  *
  * @since 1.0.0
  */
-if (file_exists(dirname(__FILE__).'/assets/functions/aa_scripts_styles.php')) {
-    require_once( dirname(__FILE__).'/assets/functions/aa_scripts_styles.php' );
+if (file_exists(dirname(__FILE__).'/functions/scripts-styles.php')) {
+    require_once( dirname(__FILE__).'/functions/scripts-styles.php' );
 }
 
 
@@ -91,8 +91,8 @@ if (file_exists(dirname(__FILE__).'/assets/functions/aa_scripts_styles.php')) {
  *
  * @since 1.0.0
  */
-if (file_exists(dirname(__FILE__).'/assets/functions/aa_widgets.php')) {
-    require_once( dirname(__FILE__).'/assets/functions/aa_widgets.php' );
+if (file_exists(dirname(__FILE__).'/functions/widgets.php')) {
+    require_once( dirname(__FILE__).'/functions/widgets.php' );
 }
 
 
@@ -101,8 +101,8 @@ if (file_exists(dirname(__FILE__).'/assets/functions/aa_widgets.php')) {
  *
  * @since 1.0.0
  */
-if (file_exists(dirname(__FILE__).'/assets/functions/aa_extras.php')) {
-    require_once( dirname(__FILE__).'/assets/functions/aa_extras.php' );
+if (file_exists(dirname(__FILE__).'/functions/extras.php')) {
+    require_once( dirname(__FILE__).'/functions/extras.php' );
 }
 
 
@@ -111,6 +111,6 @@ if (file_exists(dirname(__FILE__).'/assets/functions/aa_extras.php')) {
  *
  * @since 1.0.0
  */
-if (file_exists(dirname(__FILE__).'/assets/functions/aa_template_functions.php')) {
-    require_once( dirname(__FILE__).'/assets/functions/aa_template_functions.php' );
+if (file_exists(dirname(__FILE__).'/functions/template-functions.php')) {
+    require_once( dirname(__FILE__).'/functions/template-functions.php' );
 }
