@@ -222,3 +222,11 @@ function category_transient_flusher() {
 }
 add_action( 'edit_category', 'category_transient_flusher' );
 add_action( 'save_post',     'category_transient_flusher' );
+
+/**
+ * Add Logo fuction
+ */
+function theme_prefix_setup() {
+    add_theme_support( 'custom-logo' );
+}
+add_action( 'after_setup_theme', 'theme_prefix_setup' );
