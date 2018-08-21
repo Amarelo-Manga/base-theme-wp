@@ -26,7 +26,7 @@ function aa_scripts()
 
 
     	//wp_enqueue_script('jquery'); // Enqueue it!
-        wp_deregister_script('jquery'); // Deregister WordPress jQuery
+        //wp_deregister_script('jquery'); // Deregister WordPress jQuery
         //wp_register_script('jquery', 'http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js', array(), '1.11.2');
 
 
