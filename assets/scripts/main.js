@@ -1,6 +1,6 @@
 /**
  * scripts.js
  */
-$( document ).ready(function() {
+$(document).ready(function() {
 
 });

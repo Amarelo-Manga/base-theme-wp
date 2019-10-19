@@ -1,22 +1,22 @@
 {
-  "dependencies": {
-    "main.js": {
-      "files": [
-        "scripts/main.js"
-      ],
-      "main": true
+    "dependencies": {
+        "main.js": {
+            "files": [
+                "scripts/main.js"
+            ],
+            "main": true
+        },
+        "main.css": {
+            "files": [
+                "styles/main.scss"
+            ],
+            "main": true
+        },
+        "jquery.js": {
+            "bower": ["jquery"]
+        }
     },
-    "main.css": {
-      "files": [
-        "styles/main.scss"
-      ],
-      "main": true
-    },
-    "jquery.js": {
-      "bower": ["jquery"]
+    "config": {
+        "devUrl": "http://localhost/saudebucal/"
     }
-  },
-  "config": {
-    "devUrl": "http://localhost/amarelomanganovosite/"
-  }
 }

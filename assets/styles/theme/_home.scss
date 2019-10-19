@@ -1,0 +1,26 @@
+#home {
+    #banner {
+        border-bottom: 8px solid #51c0d3;
+    }
+    #conteudo {
+        background-repeat: no-repeat;
+        background-position-x: right;
+        padding: 50px 0px;
+    }
+    #destaques {
+        background: #000;
+        color: #fff;
+    }
+    #contato {
+        background: #464646;
+        padding: 50px 0px;
+        .col-md-6 {
+            display: inline-block;
+            max-width: 49%;
+        }
+        form {
+            background: #000000;
+            color: #fff;
+        }
+    }
+}

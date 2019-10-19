@@ -1,0 +1,92 @@
+header {
+    background: #160707;
+    &.bg {
+        background: #fff;
+        transition: transform .3s linear, top .3s linear, visibility .3s linear;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, .2);
+        padding: 7px 0px;
+        .logo {
+            width: 175px;
+        }
+    }
+    padding: 15px 0px;
+}
+
+.menu-principal-container {
+    width: 100%;
+}
+
+#menu-principal {
+    text-align: right;
+    margin-bottom: 0px;
+    li {
+        display: inline-block;
+        a {
+            padding: 10px;
+            color: #fff;
+            font-family: 'Roboto', sans-serif;
+            text-decoration: none;
+            padding: 10px .5em;
+            display: inline-block;
+            transition: all .2s linear;
+            font-size: 1rem;
+            &:hover {
+                color: #50c0d2;
+            }
+        }
+        &.current-menu-item,
+        &.current-menu-ancestor {
+            a {
+                color: #50c0d2;
+            }
+        }
+        &.current-menu-ancestor {
+            .drop-down {
+                a {
+                    color: #fff;
+                }
+                .current-menu-item {
+                    a {
+                        color: #50c0d2;
+                    }
+                }
+            }
+        }
+        &.menu-item-has-children {
+            a {
+                &:after {
+                    content: '';
+                    width: 18px;
+                    height: 15px;
+                    display: inline-block;
+                    margin-left: 4px;
+                    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj48cGF0aCBkPSJNMTYuMDAzIDE4LjYyNmw3LjA4MS03LjA4MUwyNSAxMy40NmwtOC45OTcgOC45OTgtOS4wMDMtOSAxLjkxNy0xLjkxNnoiLz48L3N2Zz4=');
+                    background-size: 100%;
+                }
+            }
+            &:hover {
+                .dropdown-menu {
+                    display: block;
+                    left: auto;
+                    top: 38px;
+                    padding: 0px;
+                    border-radius: 0px;
+                    background: #000;
+                    border-left: 3px solid #50c0d2;
+                    li {
+                        display: block;
+                    }
+                    a {
+                        &:after {
+                            display: none;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+.defaultimg {
+    //   background-attachment: fixed!important;
+}

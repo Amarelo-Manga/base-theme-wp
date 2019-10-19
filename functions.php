@@ -114,3 +114,33 @@ if (file_exists(dirname(__FILE__).'/functions/extras.php')) {
 if (file_exists(dirname(__FILE__).'/functions/template-functions.php')) {
     require_once( dirname(__FILE__).'/functions/template-functions.php' );
 }
+
+
+/**
+ *
+ * Menu SubMenu
+ */
+class Child_Wrap extends Walker_Nav_Menu
+{
+    function start_lvl(&$output, $depth = 0, $args = array())
+    {
+        $indent = str_repeat("\t", $depth);
+        $output .= "\n<div class='dropdown-menu' aria-labelledby='navbarDropdownMenuLink'>$indent<ul class=\"drop-down\">\n";
+    }
+
+    function end_lvl(&$output, $depth = 0, $args = array())
+    {
+        $indent = str_repeat("\t", $depth);
+        $output .= "$indent</ul></div>\n";
+    }
+}
+
+
+/**
+ *
+ * Get Post-Types for Tereza
+ */
+$postTypes = glob(dirname(__FILE__) . '/post-types/*.php');
+foreach ($postTypes as $pst) {
+    require_once($pst); 
+}

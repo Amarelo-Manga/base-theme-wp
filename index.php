@@ -9,7 +9,7 @@ get_header(); ?>
 
 
 	<div class="aa_wrap">
-
+dasdadsas
 		<?php if ( have_posts() ) :  while ( have_posts() ) : the_post(); ?>
 
 					<?php get_template_part( 'templates/content' ) ?>
